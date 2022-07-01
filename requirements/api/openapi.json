@@ -1,0 +1,5002 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "version": "1.0.0",
+    "title": "Murrelektronik generic REST API",
+    "description": "Here we are doing our first steps creating our own OpenAPI",
+    "contact": {
+      "name": "Murrelektronik GmbH",
+      "url": "https://www.murrelektronik.de",
+      "email": "jochen.siegle@murrelektronik.de"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    }
+  },
+  "servers": [
+    {
+      "url": "{protocol}://{environment}:{port}/{basePath}",
+      "description": "local server",
+      "variables": {
+        "protocol": {
+          "enum": [
+            "http",
+            "https"
+          ],
+          "default": "http"
+        },
+        "environment": {
+          "enum": [
+            "localhost",
+            "deopp-bsvxc-p1.megroup.global",
+            "{ipAddress}"
+          ],
+          "default": "localhost"
+        },
+        "ipAddress": {
+          "default": "192.168.138.6"
+        },
+        "port": {
+          "enum": [
+            "80",
+            "8330",
+            "8331",
+            "8080",
+            "9001"
+          ],
+          "default": "8080"
+        },
+        "basePath": {
+          "enum": [
+            "v1",
+            "iolink/v1"
+          ],
+          "default": "v1"
+        }
+      }
+    },
+    {
+      "url": "deopp-bsvxc-p1.megroup.global:{port}/{basePath}",
+      "description": "global server",
+      "variables": {
+        "port": {
+          "enum": [
+            "8330",
+            "8331"
+          ],
+          "default": "8331"
+        },
+        "basePath": {
+          "default": "v1"
+        }
+      }
+    },
+    {
+      "url": "http://{ipAddress}:{port}/{basePath}",
+      "description": "real target device",
+      "variables": {
+        "ipAddress": {
+          "default": "192.168.138.6"
+        },
+        "port": {
+          "default": "80"
+        },
+        "basePath": {
+          "default": "iolink/v1"
+        }
+      }
+    }
+  ],
+  "tags": [
+    {
+      "name": "gateway",
+      "description": "Access to parameters of the JSON gateway"
+    },
+    {
+      "name": "mqtt",
+      "description": "Access to the parameters of the MQTT client"
+    },
+    {
+      "name": "opcua",
+      "description": "Acces to the parametes of the OPC UA server"
+    },
+    {
+      "name": "slots",
+      "description": "Access to the parameters of the first hierarchy of the system. Layer above is the gatway."
+    },
+    {
+      "name": "subslots",
+      "description": "Access to the parameters of the second hierarchy of the system. Layer above is the slot."
+    },
+    {
+      "name": "devices",
+      "description": "Access to the Devices connected to the Master"
+    },
+    {
+      "name": "user",
+      "description": "User management operations."
+    },
+    {
+      "name": "system",
+      "description": "General system functionality."
+    },
+    {
+      "name": "filehandling",
+      "description": "Access to files in an separated section on the filesystem."
+    },
+    {
+      "name": "events",
+      "description": "General event handling."
+    },
+    {
+      "name": "IOL_Master",
+      "description": "Access to parameters of the JSON IO-Link Master."
+    }
+  ],
+  "paths": {
+    "/user": {
+      "post": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Add user",
+        "description": "Create an new user account with credentials ect...",
+        "operationId": "postNewUser",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/userAccountObject"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/successfulAddedUser"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorizedAuthenticationFailed"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenAddingUser"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/user/login": {
+      "get": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Logs user into the system",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.  Token is expeced in response message.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "loginUser",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/usernameQuery"
+          },
+          {
+            "$ref": "#/components/parameters/passwordQuery"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/succesfulLogIn"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorizedInvalidCredentials"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/user/logout": {
+      "get": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Logs out current logged in user session",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "logoutUser",
+        "parameters": [],
+        "responses": {
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          },
+          "default": {
+            "description": "successful operation"
+          }
+        }
+      }
+    },
+    "/user/{username}": {
+      "get": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Get user by name",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getUserByName",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/usernamePath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/successfulGetUsername"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestInvalidUsername"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundUser"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Update user",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.  This can only be done by the logged in user.",
+        "operationId": "updateUser",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/usernamePath"
+          }
+        ],
+        "requestBody": {
+          "description": "Update an existent useraccount",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/userAccountObject"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestAuthentification"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundUser"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Delete user",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.  This can only be done by the logged in user.",
+        "operationId": "deleteUser",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/usernamePath"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestAuthentification"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundUser"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/files": {
+      "get": {
+        "tags": [
+          "filehandling"
+        ],
+        "summary": "Get the list of all files administrated by the filehandler",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "operationId": "getFiles",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/successfulFiles"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundOperation"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/files/{fileName}": {
+      "get": {
+        "tags": [
+          "filehandling"
+        ],
+        "summary": "Get a file administrated by the filehandler",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "operationId": "getFileByName",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/fileName"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/successfulGetFile"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestQueryParameter"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundOperation"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "filehandling"
+        ],
+        "summary": "Delete a file administrated by the filehandler",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "operationId": "deleteFileByName",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/fileName"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestQueryParameter"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundOperation"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/files/update": {
+      "post": {
+        "tags": [
+          "filehandling"
+        ],
+        "summary": "Update or create a file administrated by the filehandler",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "operationId": "updateOrCreateFile",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/successfulFilePost"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestQueryParameter"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundOperation"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/mqtt/configuration": {
+      "get": {
+        "tags": [
+          "mqtt"
+        ],
+        "summary": "Read the MQTT configuration of the Gateway.",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "operationId": "getMqttConfiguration",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/successfulMqttGetConfiguration"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundOperation"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          },
+          "501": {
+            "$ref": "#/components/responses/notImplementedMqtt"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "mqtt"
+        ],
+        "summary": "Update the MQTT configuration of the Gateway.",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "postMqttConfiguration",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/mqttConfigurationGetPost"
+              },
+              "examples": {
+                "Active Client": {
+                  "$ref": "#/components/examples/mqttActiveClient"
+                },
+                "Inactive Client": {
+                  "$ref": "#/components/examples/mqttInactiveClient"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestDataSet"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundOperation"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          },
+          "501": {
+            "$ref": "#/components/responses/notImplementedMqtt"
+          }
+        }
+      }
+    },
+    "/mqtt/topics": {
+      "get": {
+        "tags": [
+          "mqtt"
+        ],
+        "summary": "Get the list of MQTT topics.",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "operationId": "getMqttTopics",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/successfulMqttGetTopic"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundOperation"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          },
+          "501": {
+            "$ref": "#/components/responses/notImplementedMqtt"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "mqtt"
+        ],
+        "summary": "Create a new MQTT topic.",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "createMqttTopic",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/mqttConfigurationTopicPost"
+              },
+              "examples": {
+                "Process Data": {
+                  "$ref": "#/components/examples/mqttTopicPostData"
+                },
+                "Event": {
+                  "$ref": "#/components/examples/mqttTopicPostEvent"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/successfulMqttPostTopic"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestDataSet"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundOperation"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          },
+          "501": {
+            "$ref": "#/components/responses/notImplementedMqtt"
+          }
+        }
+      }
+    },
+    "/mqtt/topics/{topicId}": {
+      "get": {
+        "tags": [
+          "mqtt"
+        ],
+        "summary": "Get one MQTT topic.",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "operationId": "getMqttTopicById",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/mqttTopicId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/successfullMqttGetTopicById"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundOperation"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          },
+          "501": {
+            "$ref": "#/components/responses/notImplementedMqtt"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "mqtt"
+        ],
+        "summary": "Delete a specific MQTT topic.",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "operationId": "deleteMqttTopicById",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/mqttTopicId"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestDataSet"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundOperation"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          },
+          "501": {
+            "$ref": "#/components/responses/notImplementedMqtt"
+          }
+        }
+      }
+    },
+    "/mqtt/connectionstatus": {
+      "get": {
+        "tags": [
+          "mqtt"
+        ],
+        "summary": "Read the connection status of the MQTT client to the MQTT server.",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "operationId": "mqttGetConnectionStatus",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/successfulMqttConnectionStatus"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundOperation"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          },
+          "501": {
+            "$ref": "#/components/responses/notImplementedMqtt"
+          }
+        }
+      }
+    },
+    "/opcua/serverstatus": {
+      "get": {
+        "tags": [
+          "opcua"
+        ],
+        "summary": "Read the OPC UA server status.",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "operationId": "opcuaGetServerStatus",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/successfulOpcuaServerStatus"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundOperation"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          },
+          "501": {
+            "$ref": "#/components/responses/notImplementedOpcua"
+          }
+        }
+      }
+    },
+    "/opcua/configuration": {
+      "get": {
+        "tags": [
+          "opcua"
+        ],
+        "summary": "Read the OPC UA configuration of the Gateway.",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "operationId": "getOpcUaConfiguration",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/successfulOpcuaGetConfiguration"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundOperation"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          },
+          "501": {
+            "$ref": "#/components/responses/notImplementedOpcua"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "opcua"
+        ],
+        "summary": "Update the OPC UA server configuraion of the gateway.",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "postOpcUaConfiguration",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/opcuaConfigurationGetPost"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestDataSet"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundOperation"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          },
+          "501": {
+            "$ref": "#/components/responses/notImplementedOpcua"
+          }
+        }
+      }
+    },
+    "/gateway/identification": {
+      "get": {
+        "tags": [
+          "gateway"
+        ],
+        "summary": "Read the identification of the Gateway.",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "operationId": "getGatewayIdentification",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/successfulGatewayIdentification"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundOperation"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "gateway"
+        ],
+        "summary": "Write application specific identification to gateway.",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "operationId": "postGatewayIdentification",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/identificationPost"
+              },
+              "examples": {
+                "All optional fiels": {
+                  "value": {
+                    "applicationSpecificTag": "device123",
+                    "locationTag": "opp.hall1.maschine4.picker2",
+                    "functionTag": "sensor signal collecting"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorizedAuthenticationFailed"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundOperation"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/gateway/status": {
+      "get": {
+        "tags": [
+          "gateway"
+        ],
+        "summary": "Get the Gateway status",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "operationId": "getGatewayStatus",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/successfulGatewayStatus"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundOperation"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/gateway/leds": {
+      "get": {
+        "tags": [
+          "gateway"
+        ],
+        "summary": "Get the list of the LEDs of the Gateway.",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "operationId": "getGatewayLeds",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/successfulLedsGateway"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundOperation"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/gateway/configuration/network": {
+      "get": {
+        "tags": [
+          "gateway"
+        ],
+        "summary": "Read the network configuration of the Gateway .",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "operationId": "getGatewayNetworkConfiguration",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/gatewayNetworkConfigurationGetPost"
+                },
+                "examples": {
+                  "Manual": {
+                    "value": {
+                      "ethIpv4": [
+                        {
+                          "ipConfiguration": "MANUAL",
+                          "ipAddress": "192.168.138.6",
+                          "subnetMask": "255.255.255.0",
+                          "standardGateway": "192.168.138.6",
+                          "dnsServer": {
+                            "server": [
+                              "1.1.1.1",
+                              "1.0.0.1"
+                            ],
+                            "configuration": "0_AUTOMATIC"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "DHCP": {
+                    "value": {
+                      "ethIpv4": [
+                        {
+                          "ipConfiguration": "DHCP",
+                          "ipAddress": "192.168.100.5",
+                          "subnetMask": "255.255.255.0",
+                          "standardGateway": "192.168.100.1"
+                        }
+                      ]
+                    }
+                  },
+                  "BOOTP": {
+                    "value": {
+                      "ethIpv4": [
+                        {
+                          "ipConfiguration": "BOOTP",
+                          "ipAddress": "192.168.101.5",
+                          "subnetMask": "255.255.255.0",
+                          "standardGateway": "192.168.101.1"
+                        }
+                      ]
+                    }
+                  },
+                  "Multiple ethernet interfaces": {
+                    "value": {
+                      "ethIpv4": [
+                        {
+                          "ipConfiguration": "MANUAL",
+                          "ipAddress": "192.168.1.134",
+                          "subnetMask": "255.255.255.0",
+                          "standardGateway": "192.168.1.1",
+                          "dnsServer": {
+                            "server": [
+                              "8.8.8.8",
+                              "8.8.4.4"
+                            ],
+                            "configuration": "0_AUTOMATIC"
+                          }
+                        },
+                        {
+                          "ipConfiguration": "MANUAL",
+                          "ipAddress": "192.168.2.10",
+                          "subnetMask": "255.255.255.0",
+                          "standardGateway": "192.168.2.1"
+                        },
+                        {
+                          "ipConfiguration": "DHCP",
+                          "subnetMask": "255.255.255.0",
+                          "ipAddress": "192.168.200.7",
+                          "standardGateway": "192.168.200.1"
+                        },
+                        {
+                          "ipConfiguration": "BOOTP",
+                          "ipAddress": "192.168.201.7",
+                          "subnetMask": "255.255.255.0",
+                          "standardGateway": "192.168.201.1"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundOperation"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "gateway"
+        ],
+        "summary": "Update the network configuration of the Gateway.",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "operationId": "postGatewayNetworkConfiguration",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/gatewayNetworkConfigurationGetPost"
+              },
+              "examples": {
+                "Manual": {
+                  "value": {
+                    "ethIpv4": [
+                      {
+                        "ipConfiguration": "MANUAL",
+                        "ipAddress": "192.168.1.13",
+                        "subnetMask": "255.255.255.0",
+                        "standardGateway": "192.168.1.1"
+                      }
+                    ]
+                  }
+                },
+                "DHCP": {
+                  "value": {
+                    "ethIpv4": [
+                      {
+                        "ipConfiguration": "DHCP"
+                      }
+                    ]
+                  }
+                },
+                "BOOTP": {
+                  "value": {
+                    "ethIpv4": [
+                      {
+                        "ipConfiguration": "BOOTP"
+                      }
+                    ]
+                  }
+                },
+                "Multiple ethernet interfaces": {
+                  "value": {
+                    "ethIpv4": [
+                      {
+                        "ipConfiguration": "MANUAL",
+                        "ipAddress": "192.168.1.13",
+                        "subnetMask": "255.255.255.0",
+                        "standardGateway": "192.168.1.1"
+                      },
+                      {
+                        "ipConfiguration": "MANUAL",
+                        "ipAddress": "192.168.2.10",
+                        "subnetMask": "255.255.255.0",
+                        "standardGateway": "192.168.2.1"
+                      },
+                      {
+                        "ipConfiguration": "DHCP"
+                      },
+                      {
+                        "ipConfiguration": "BOOTP"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestDataSet"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorizedAuthenticationFailed"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/gateway/configuration/diagnosticreports": {
+      "get": {
+        "tags": [
+          "gateway"
+        ],
+        "summary": "Read the diagnostic reports configuration of the Gateway.",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "operationId": "getGatewayDiagnosticReportsConfiguration",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/successfulGatewayDiagnosticReportsConfiguration"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundOperation"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "gateway"
+        ],
+        "summary": "Update the diagnostic reports configuration of the Gateway.",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "postGatewayDiagnosticReportsConfiguration",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/diagnosticReportsObject"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorizedAuthenticationFailed"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/gateway/configuration/iolayout": {
+      "get": {
+        "tags": [
+          "gateway"
+        ],
+        "summary": "Read the io layout configuration of the Gateway.",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "operationId": "getGatewayIoLayoutConfiguration",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/successfulGatewayIoLayoutConfiguration"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundOperation"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "gateway"
+        ],
+        "summary": "Update the io layout configuration of the Gateway.",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "postGatewayIoLayoutConfiguration",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ioLayoutObject"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorizedAuthenticationFailed"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/gateway/capabilities": {
+      "get": {
+        "tags": [
+          "gateway"
+        ],
+        "summary": "Read the capabilities of the module.",
+        "description": "This REST API command is mandatory for all applications.",
+        "operationId": "getGatewayCapabilities",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/successfulGetGatewayCapabilities"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/slots/{slotNumber}/identification": {
+      "get": {
+        "tags": [
+          "slots"
+        ],
+        "summary": "Read the identification of the slot.",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "operationId": "getSlotIdentification",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slotNumber"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/successfulSlotIdentification"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundOperation"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "slots"
+        ],
+        "summary": "Write application specific identification to the slots.",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "operationId": "postSlotIdentification",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slotNumber"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/identificationPost"
+              },
+              "examples": {
+                "All optional fiels": {
+                  "value": {
+                    "applicationSpecificTag": "device123",
+                    "locationTag": "opp.hall1.maschine4.picker2",
+                    "functionTag": "sensor signal collecting"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorizedAuthenticationFailed"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundSlot"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/slots/{slotNumber}/status'": {
+      "get": {
+        "tags": [
+          "slots"
+        ],
+        "summary": "Get the status of the Slot.",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "operationId": "getSlotStatus",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slotNumber"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/successfulSlotStatus"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundOperation"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/slots/{slotNumber}/leds": {
+      "get": {
+        "tags": [
+          "slots"
+        ],
+        "summary": "Get the list of the LEDs of the Slot.",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "operationId": "getSlotLeds",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slotNumber"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/successfulLedsSlot"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundOperation"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/slots/{slotNumber}/capabilities": {
+      "get": {
+        "tags": [
+          "slots"
+        ],
+        "summary": "Read the capabilities of the module.",
+        "description": "This REST API command is mandatory for all applications.",
+        "operationId": "getSlotsCapabilities",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slotNumber"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/successfulGetSlotsCapabilities"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/slots/{slotNumber}/subslots/{subslotNumber}/identification": {
+      "get": {
+        "tags": [
+          "subslots"
+        ],
+        "summary": "Read the identification of the subslot.",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "operationId": "getSubslotIdentification",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slotNumber"
+          },
+          {
+            "$ref": "#/components/parameters/subslotNumber"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/successfulDeviceIdentification"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundOperation"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "subslots"
+        ],
+        "summary": "Write application specific identification to the subslot.",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "operationId": "postSubslotIdentificaton",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slotNumber"
+          },
+          {
+            "$ref": "#/components/parameters/subslotNumber"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/identificationPost"
+              },
+              "examples": {
+                "All optional fiels": {
+                  "value": {
+                    "applicationSpecificTag": "device123",
+                    "locationTag": "opp.hall1.maschine4.picker2",
+                    "functionTag": "sensor signal collecting"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorizedAuthenticationFailed"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundSubslot"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/slots/{slotNumber}/subslots/{subslotNumber}/status": {
+      "get": {
+        "tags": [
+          "subslots"
+        ],
+        "summary": "Get the status of the subslot.",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "operationId": "getSubSlotStatus",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slotNumber"
+          },
+          {
+            "$ref": "#/components/parameters/subslotNumber"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/successfulSubslotStatus"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundOperation"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/slots/{slotNumber}/subslots/{subslotNumber}/leds": {
+      "get": {
+        "tags": [
+          "subslots"
+        ],
+        "summary": "Get the list of the LEDs of the Subslot.",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "operationId": "getSubSlotLeds",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slotNumber"
+          },
+          {
+            "$ref": "#/components/parameters/subslotNumber"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/successfulLedsSubslot"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundOperation"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/slots/{slotNumber}/subslots/{subslotNumber}/capabilities": {
+      "get": {
+        "tags": [
+          "subslots"
+        ],
+        "summary": "Read the capabilities of the sub-module.",
+        "description": "This REST API command is mandatory for all applications.",
+        "operationId": "getSubSlotsCapabilities",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slotNumber"
+          },
+          {
+            "$ref": "#/components/parameters/subslotNumber"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/successfulGetSubSlotsCapabilities"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/slots/{slotNumber}/subslots/{subslotNumber}/datastorage": {
+      "get": {
+        "tags": [
+          "subslots"
+        ],
+        "summary": "Read the datastorage of the IO-Link Port.",
+        "description": "This REST API command is mandatory for all applications. Content-string is empty if there is no datastorage content.",
+        "operationId": "getSlotsDatastorage",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slotNumber"
+          },
+          {
+            "$ref": "#/components/parameters/subslotNumber"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/successfulGetSlotsDatastorage"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "subslots"
+        ],
+        "summary": "Set new datastorage for IO-Link Port.",
+        "description": "This REST API command is mandatory for all devices/applications where applicable. If there are no restrictions the object will be modified. After receiving the datastorage content the port is restarted if the port is in mode “Backup&Restore” or “Restore” see also IO-Link Spec. and see 5.6.5",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "createDatastorage",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/slotNumber"
+          },
+          {
+            "$ref": "#/components/parameters/subslotNumber"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatastorageSlotsObject"
+              },
+              "examples": {
+                "post datastorage": {
+                  "$ref": "#/components/examples/readDatastorageSlots"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/successfulMqttPostTopic"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestDataSet"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundOperation"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          },
+          "501": {
+            "$ref": "#/components/responses/notImplementedIOLink"
+          }
+        }
+      }
+    },
+    "/devices/{deviceAlias}/identification": {
+      "get": {
+        "tags": [
+          "devices"
+        ],
+        "summary": "Read the identification of a device connected to a subslot.",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "operationId": "getDeviceIdentification",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/deviceAlias"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/successfulDeviceIdentification"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "devices"
+        ],
+        "summary": "Write application specific identification to a device connected to a subslot.",
+        "description": "This REST API command is mandatory for all devices/applications where applicable.",
+        "operationId": "postDeviceIdentification",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/deviceAlias"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/identificationPost"
+              },
+              "examples": {
+                "All optional fields": {
+                  "value": {
+                    "applicationSpecificTag": "device123",
+                    "locationTag": "opp.hall1.maschine4.picker2",
+                    "functionTag": "sensor signal collecting"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorizedAuthenticationFailed"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundDevice"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/system": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Read the system status of the modul.",
+        "description": "This REST API command is mandatory for all applications.",
+        "operationId": "getSystem",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/successfulGetSystem"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Write modul specific commands.",
+        "description": "This REST API command is mandatory for all applications.",
+        "operationId": "postSystem",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Set system commands (reset, rebbot, update...)",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/systemSet"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorizedAuthenticationFailed"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundDevice"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/events": {
+      "get": {
+        "tags": [
+          "events"
+        ],
+        "summary": "Read (all or selected) events from the modul.",
+        "description": "This REST API command is mandatory for all applications.",
+        "operationId": "getEvents",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/EventOrigin"
+          },
+          {
+            "$ref": "#/components/parameters/EventSlotNumber"
+          },
+          {
+            "$ref": "#/components/parameters/EventSubSlotNumber"
+          },
+          {
+            "$ref": "#/components/parameters/ioLinkEventDeviceAlias"
+          },
+          {
+            "$ref": "#/components/parameters/EventTop"
+          },
+          {
+            "$ref": "#/components/parameters/EventBottom"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/successfulGetEvents"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "responses": {
+      "successfulGatewayIdentification": {
+        "description": "Successful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/identificationObject"
+            }
+          }
+        }
+      },
+      "successfulSlotIdentification": {
+        "description": "Successful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/slotIdentificationGet"
+            },
+            "examples": {
+              "integrated": {
+                "value": [
+                  {
+                    "name": "Integrated 8xIOLM"
+                  }
+                ]
+              },
+              "external": {
+                "$ref": "#/components/examples/slotInformation"
+              }
+            }
+          }
+        }
+      },
+      "successfulDeviceIdentification": {
+        "description": "Successful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/deviceIdentificationGet"
+            },
+            "examples": {
+              "device1": {
+                "$ref": "#/components/examples/deviceInformation"
+              }
+            }
+          }
+        }
+      },
+      "successfulAddedUser": {
+        "description": "Successful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/userAccountObject"
+            }
+          }
+        }
+      },
+      "succesfulLogIn": {
+        "description": "Successful opearation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/loginUserGet"
+            }
+          }
+        }
+      },
+      "successfulGetUsername": {
+        "description": "Successful opearation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/userAccountObject"
+            }
+          }
+        }
+      },
+      "successfulMqttGetConfiguration": {
+        "description": "Successful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/mqttConfigurationGetPost"
+            },
+            "examples": {
+              "Active client": {
+                "$ref": "#/components/examples/mqttActiveClient"
+              },
+              "Inactive client": {
+                "$ref": "#/components/examples/mqttInactiveClient"
+              }
+            }
+          }
+        }
+      },
+      "successfulMqttGetTopic": {
+        "description": "Successful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/mqttConfigurationTopicGet"
+              }
+            },
+            "example": [
+              {
+                "topicId": 1,
+                "topicName": "Sensor34/processData",
+                "qos": "1_AT_LEAST_ONCE",
+                "deviceAlias": "DT35",
+                "processData": {
+                  "direction": "getData",
+                  "format": "iodd",
+                  "interval": {
+                    "value": 10,
+                    "unit": "ms"
+                  }
+                }
+              },
+              {
+                "topicId": 2,
+                "topicName": "Sensor34/event",
+                "qos": "1_AT_LEAST_ONCE",
+                "deviceAlias": "TAD081",
+                "event": null
+              },
+              {
+                "topicId": 3,
+                "topicName": "PD",
+                "qos": "0_ONLY_ONCE",
+                "deviceAlias": "BNI_IOL",
+                "processData": {
+                  "direction": "getSetData",
+                  "format": "iodd",
+                  "onChange": true
+                }
+              }
+            ]
+          }
+        }
+      },
+      "successfulMqttPostTopic": {
+        "description": "Successful operation returning the topic ID",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "integer"
+            }
+          }
+        }
+      },
+      "successfullMqttGetTopicById": {
+        "description": "Successful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/mqttConfigurationTopicGet"
+            },
+            "examples": {
+              "Process Data": {
+                "$ref": "#/components/examples/mqttTopicGetData"
+              },
+              "Event": {
+                "$ref": "#/components/examples/mqttTopicGetEvent"
+              }
+            }
+          }
+        }
+      },
+      "successfulMqttConnectionStatus": {
+        "description": "Successful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/mqttConnectionStatusGet"
+            }
+          }
+        }
+      },
+      "successfulOpcuaServerStatus": {
+        "description": "Successful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/opcuaServerStatusGet"
+            }
+          }
+        }
+      },
+      "successfulOpcuaGetConfiguration": {
+        "description": "Successful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/opcuaConfigurationGetPost"
+            }
+          }
+        }
+      },
+      "successfulLedsGateway": {
+        "description": "Successful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/gatewayLedsGet"
+            }
+          }
+        }
+      },
+      "successfulLedsSlot": {
+        "description": "Successful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/slotLedsGet"
+            }
+          }
+        }
+      },
+      "successfulLedsSubslot": {
+        "description": "Successful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/subslotLedsGet"
+            }
+          }
+        }
+      },
+      "successfulFiles": {
+        "description": "Successful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/fileObject"
+            },
+            "examples": {
+              "file list": {
+                "$ref": "#/components/examples/filesGet"
+              }
+            }
+          }
+        }
+      },
+      "successfulGetFile": {
+        "description": "Successful operation",
+        "content": {
+          "multipart/form-data": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "fileName": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      },
+      "successfulFilePost": {
+        "description": "Successful operation returning the file id",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "integer"
+            }
+          }
+        }
+      },
+      "successfulGatewayDiagnosticReportsConfiguration": {
+        "description": "Successful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/diagnosticReportsObject"
+            }
+          }
+        }
+      },
+      "successfulGatewayIoLayoutConfiguration": {
+        "description": "Successful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ioLayoutObject"
+            }
+          }
+        }
+      },
+      "successfulGatewayStatus": {
+        "description": "Successful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/gatewayStatusObject"
+            }
+          }
+        }
+      },
+      "successfulSlotStatus": {
+        "description": "Successful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/slotStatusObject"
+            }
+          }
+        }
+      },
+      "successfulSubslotStatus": {
+        "description": "Successful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/subslotStatusObject"
+            },
+            "examples": {
+              "IO-Link Master": {
+                "$ref": "#/components/examples/subslotStatus"
+              }
+            }
+          }
+        }
+      },
+      "badRequest": {
+        "description": "Bad request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/errorObject"
+            },
+            "examples": {
+              "104": {
+                "value": {
+                  "code": 104,
+                  "message": "Action locked by another client"
+                }
+              },
+              "201": {
+                "value": {
+                  "code": 201,
+                  "message": "JSON parsing failed"
+                }
+              },
+              "202": {
+                "value": {
+                  "code": 202,
+                  "message": "JSON data value invalid"
+                }
+              },
+              "203": {
+                "value": {
+                  "code": 203,
+                  "message": "JSON data type invalid"
+                }
+              },
+              "206": {
+                "value": {
+                  "code": 206,
+                  "message": "JSON data value out of bounds"
+                }
+              },
+              "208": {
+                "value": {
+                  "code": 208,
+                  "message": "POST request without content"
+                }
+              }
+            }
+          }
+        }
+      },
+      "badRequestDataSet": {
+        "description": "Bad request (data set requested)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/errorObject"
+            },
+            "examples": {
+              "104": {
+                "value": {
+                  "code": 104,
+                  "message": "Action locked by another client"
+                }
+              },
+              "201": {
+                "value": {
+                  "code": 201,
+                  "message": "JSON parsing failed"
+                }
+              },
+              "202": {
+                "value": {
+                  "code": 202,
+                  "message": "JSON data value invalid"
+                }
+              },
+              "203": {
+                "value": {
+                  "code": 203,
+                  "message": "JSON data type invalid"
+                }
+              },
+              "204": {
+                "value": {
+                  "code": 204,
+                  "message": "Enumeration value unknown"
+                }
+              },
+              "205": {
+                "value": {
+                  "code": 205,
+                  "message": "JSON data value out of range"
+                }
+              },
+              "206": {
+                "value": {
+                  "code": 206,
+                  "message": "JSON data value out of bounds"
+                }
+              },
+              "208": {
+                "value": {
+                  "code": 208,
+                  "message": "POST request without content"
+                }
+              },
+              "701": {
+                "value": {
+                  "code": 701,
+                  "message": "Data set incomplete"
+                }
+              },
+              "702": {
+                "value": {
+                  "code": 702,
+                  "message": "Data set not applicable"
+                }
+              },
+              "703": {
+                "value": {
+                  "code": 703,
+                  "message": "Data set combination incompatible"
+                }
+              }
+            }
+          }
+        }
+      },
+      "badRequestInvalidUsername": {
+        "description": "Unauthorized",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/errorObject"
+            },
+            "example": {
+              "code": 5012,
+              "message": "UserMgmtFailure: Invalid Username."
+            }
+          }
+        }
+      },
+      "badRequestAuthentification": {
+        "description": "Bad request (data set, user)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/errorObject"
+            },
+            "examples": {
+              "104": {
+                "value": {
+                  "code": 104,
+                  "message": "Action locked by another client"
+                }
+              },
+              "201": {
+                "value": {
+                  "code": 201,
+                  "message": "JSON parsing failed"
+                }
+              },
+              "202": {
+                "value": {
+                  "code": 202,
+                  "message": "JSON data value invalid"
+                }
+              },
+              "203": {
+                "value": {
+                  "code": 203,
+                  "message": "JSON data type invalid"
+                }
+              },
+              "204": {
+                "value": {
+                  "code": 204,
+                  "message": "Enumeration value unknown"
+                }
+              },
+              "205": {
+                "value": {
+                  "code": 205,
+                  "message": "JSON data value out of range"
+                }
+              },
+              "206": {
+                "value": {
+                  "code": 206,
+                  "message": "JSON data value out of bounds"
+                }
+              },
+              "208": {
+                "value": {
+                  "code": 208,
+                  "message": "POST request without content"
+                }
+              },
+              "701": {
+                "value": {
+                  "code": 701,
+                  "message": "Data set incomplete"
+                }
+              },
+              "702": {
+                "value": {
+                  "code": 702,
+                  "message": "Data set not applicable"
+                }
+              },
+              "703": {
+                "value": {
+                  "code": 703,
+                  "message": "Data set combination incompatible"
+                }
+              },
+              "5012": {
+                "value": {
+                  "code": 5012,
+                  "message": "UserMgmtFailure: Invalid Username."
+                }
+              }
+            }
+          }
+        }
+      },
+      "badRequestQueryParameter": {
+        "description": "Bad request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/errorObject"
+            },
+            "examples": {
+              "104": {
+                "value": {
+                  "code": 104,
+                  "message": "Action locked by another client"
+                }
+              },
+              "305": {
+                "value": {
+                  "code": 305,
+                  "message": "Incorrect query parameter name"
+                }
+              }
+            }
+          }
+        }
+      },
+      "unauthorizedAuthenticationFailed": {
+        "description": "Unauthorized",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/errorObject"
+            },
+            "example": {
+              "code": 5005,
+              "message": "Authentication failed."
+            }
+          }
+        }
+      },
+      "unauthorizedInvalidCredentials": {
+        "description": "Unauthorized",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/errorObject"
+            },
+            "example": {
+              "code": 5010,
+              "message": "Invalid credentials."
+            }
+          }
+        }
+      },
+      "forbidden": {
+        "description": "Forbidden",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/errorObject"
+            },
+            "examples": {
+              "150": {
+                "value": {
+                  "code": 150,
+                  "message": "Permission denied"
+                }
+              }
+            }
+          }
+        }
+      },
+      "forbiddenAddingUser": {
+        "description": "Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/errorObject"
+            },
+            "examples": {
+              "150": {
+                "value": {
+                  "code": 115,
+                  "message": "Permission denied"
+                }
+              },
+              "5012": {
+                "value": {
+                  "code": 5012,
+                  "message": "UserMgmtFailure: Invalid Username."
+                }
+              },
+              "5013": {
+                "value": {
+                  "code": 5013,
+                  "message": "UserMgmtFailure: Maximum number of users reached."
+                }
+              },
+              "5014": {
+                "value": {
+                  "code": 5014,
+                  "message": "UserMgmtFailure: User with this username already exists."
+                }
+              },
+              "5015": {
+                "value": {
+                  "code": 5015,
+                  "message": "UserMgmtFailure: Invalid password."
+                }
+              }
+            }
+          }
+        }
+      },
+      "notFoundSlot": {
+        "description": "Not found (slot)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/errorObject"
+            },
+            "examples": {
+              "302": {
+                "value": {
+                  "code": 302,
+                  "message": "slotNumber not found"
+                }
+              }
+            }
+          }
+        }
+      },
+      "notFoundSubslot": {
+        "description": "Not found (subslot)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/errorObject"
+            },
+            "examples": {
+              "302": {
+                "value": {
+                  "code": 302,
+                  "message": "slotNumber not found"
+                }
+              },
+              "303": {
+                "value": {
+                  "code": 303,
+                  "message": "subslotNumber not found"
+                }
+              }
+            }
+          }
+        }
+      },
+      "notFoundDevice": {
+        "description": "Not found (device)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/errorObject"
+            },
+            "examples": {
+              "304": {
+                "value": {
+                  "code": 304,
+                  "message": "deviceAlias not found"
+                }
+              },
+              "308": {
+                "value": {
+                  "code": 308,
+                  "message": "Device is not accessible"
+                }
+              }
+            }
+          }
+        }
+      },
+      "notFoundOperation": {
+        "description": "Not found (operation)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/errorObject"
+            },
+            "examples": {
+              "103": {
+                "value": {
+                  "code": 103,
+                  "message": "Operation not supported"
+                }
+              },
+              "301": {
+                "value": {
+                  "code": 301,
+                  "message": "Resource not found (e.g. wrong URL)"
+                }
+              }
+            }
+          }
+        }
+      },
+      "notFoundUser": {
+        "description": "Not found (user)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/errorObject"
+            },
+            "examples": {
+              "3301": {
+                "value": {
+                  "code": 3301,
+                  "message": "UserMgmtFailure: User not found."
+                }
+              }
+            }
+          }
+        }
+      },
+      "internalServerError": {
+        "description": "Internal server error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/errorObject"
+            },
+            "examples": {
+              "101": {
+                "value": {
+                  "code": 101,
+                  "message": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "notImplementedMqtt": {
+        "description": "Not Implemented",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/errorObject"
+            },
+            "examples": {
+              "106": {
+                "value": {
+                  "code": 106,
+                  "message": "MQTT feature not supported"
+                }
+              }
+            }
+          }
+        }
+      },
+      "notImplementedOpcua": {
+        "description": "Not Implemented",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/errorObject"
+            },
+            "examples": {
+              "1107": {
+                "value": {
+                  "code": 1107,
+                  "message": "OPC UA feature not supported"
+                }
+              }
+            }
+          }
+        }
+      },
+      "notImplementedIOLink": {
+        "description": "Not Implemented",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/errorObject"
+            },
+            "examples": {
+              "333": {
+                "value": {
+                  "code": 333,
+                  "message": "IO-Link feature not supported"
+                }
+              }
+            }
+          }
+        }
+      },
+      "successfulGetSystem": {
+        "description": "Successful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/systemGet"
+            }
+          }
+        }
+      },
+      "successfulSetSystem": {
+        "description": "Successful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/systemSet"
+            }
+          }
+        }
+      },
+      "successfulGetEvents": {
+        "description": "Successful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/EventObject"
+            },
+            "examples": {
+              "read events": {
+                "$ref": "#/components/examples/readEvents"
+              }
+            }
+          }
+        }
+      },
+      "successfulGetGatewayCapabilities": {
+        "description": "Successful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CapabilitiesGatewayObject"
+            },
+            "examples": {
+              "read capabilities": {
+                "$ref": "#/components/examples/readCapabilitiesGateway"
+              }
+            }
+          }
+        }
+      },
+      "successfulGetSlotsCapabilities": {
+        "description": "Successful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CapabilitiesSlotsObject"
+            },
+            "examples": {
+              "read capabilities": {
+                "$ref": "#/components/examples/readCapabilitiesSlots"
+              }
+            }
+          }
+        }
+      },
+      "successfulGetSubSlotsCapabilities": {
+        "description": "Successful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CapabilitiesSubSlotsObject"
+            },
+            "examples": {
+              "read capabilities": {
+                "$ref": "#/components/examples/readCapabilitiesSubSlots"
+              }
+            }
+          }
+        }
+      },
+      "successfulGetSlotsDatastorage": {
+        "description": "Successful operation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/DatastorageSlotsObject"
+            },
+            "examples": {
+              "read datastorage": {
+                "$ref": "#/components/examples/readDatastorageSlots"
+              }
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "ipConfiguration": {
+        "type": "string",
+        "enum": [
+          "MANUAL (m)",
+          "DHCP (c)",
+          "BOOTP (c)"
+        ],
+        "example": "MANUAL (m)",
+        "x-enumDescriptions": {
+          "MANUAL": 0,
+          "DHCP": 1,
+          "BOOTP": 2
+        }
+      },
+      "role": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": [
+            "USER",
+            "EXPERT",
+            "ADMIN",
+            "SERVICE",
+            "PRODUCTION"
+          ]
+        }
+      },
+      "userId": {
+        "type": "integer",
+        "description": "Unique user identification number",
+        "example": "0815"
+      },
+      "userStatus": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": [
+            "OFFLINE (m)",
+            "ONLINE (m)",
+            "CHANGE_PSW_REQUEST (o)"
+          ]
+        }
+      },
+      "userAccountObject": {
+        "type": "object",
+        "required": [
+          "id",
+          "username",
+          "password",
+          "role"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "example": 22
+          },
+          "username": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/role"
+          },
+          "password": {
+            "type": "string"
+          },
+          "userStatus": {
+            "$ref": "#/components/schemas/userStatus"
+          }
+        },
+        "example": {
+          "id": 22,
+          "username": "user1",
+          "firstName": "John",
+          "lastName": "Doe",
+          "email": "john.doe@customer.com",
+          "password": "12345678",
+          "role": [
+            "EXPERT"
+          ],
+          "userStatus": [
+            "ONLINE"
+          ]
+        }
+      },
+      "loginUserGet": {
+        "type": "object",
+        "required": [
+          "token",
+          "userrole"
+        ],
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "userrole": {
+            "$ref": "#/components/schemas/role"
+          }
+        },
+        "example": {
+          "token": "S0VLU0UhIExFQ0tFUiEK",
+          "userrole": "EXPERT"
+        }
+      },
+      "processData": {
+        "allOf": [
+          {
+            "type": "object",
+            "required": [
+              "direction",
+              "format"
+            ],
+            "properties": {
+              "direction": {
+                "$ref": "#/components/schemas/processDataContent"
+              },
+              "format": {
+                "$ref": "#/components/schemas/processDataFormat"
+              }
+            }
+          }
+        ],
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "interval"
+            ],
+            "properties": {
+              "interval": {
+                "$ref": "#/components/schemas/cycleTime"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "onChange"
+            ],
+            "properties": {
+              "onChange": {
+                "type": "boolean"
+              }
+            }
+          }
+        ]
+      },
+      "processDataFormat": {
+        "type": "string",
+        "enum": [
+          "byteArray",
+          "iodd"
+        ],
+        "default": "byteArray"
+      },
+      "processDataContent": {
+        "type": "string",
+        "enum": [
+          "getData",
+          "setData",
+          "getSetData"
+        ],
+        "default": "getData"
+      },
+      "mqttConfigurationGetPost": {
+        "type": "object",
+        "required": [
+          "clientMode"
+        ],
+        "properties": {
+          "clientMode": {
+            "type": "string",
+            "example": "ACTIVE"
+          },
+          "serverAddress": {
+            "type": "string",
+            "example": "192.168.138.1/mosquitto"
+          },
+          "username": {
+            "type": "string",
+            "example": "user1"
+          },
+          "password": {
+            "type": "string",
+            "example": 123456789
+          },
+          "lastWill": {
+            "type": "object",
+            "required": [
+              "topic",
+              "message",
+              "qos",
+              "retain"
+            ],
+            "properties": {
+              "topic": {
+                "type": "string",
+                "example": "process_data"
+              },
+              "message": {
+                "type": "string",
+                "example": "Process data transfer stopped."
+              },
+              "qos": {
+                "type": "string",
+                "enum": [
+                  "0_ONLY_ONCE",
+                  "1_AT_LEAST_ONCE",
+                  "2_EXACTLY_ONCE"
+                ],
+                "example": "1_AT_LEAST_ONCE"
+              },
+              "retain": {
+                "type": "boolean",
+                "example": true
+              }
+            }
+          },
+          "keepAliveTime": {
+            "type": "integer",
+            "example": 10
+          }
+        }
+      },
+      "mqttConfigurationTopic": {
+        "allOf": [
+          {
+            "type": "object",
+            "required": [
+              "qos",
+              "deviceAlias"
+            ],
+            "properties": {
+              "qos": {
+                "type": "string",
+                "enum": [
+                  "0_ONLY_ONCE",
+                  "1_AT_LEAST_ONCE",
+                  "2_EXACTLY_ONCE"
+                ]
+              },
+              "deviceAlias": {
+                "type": "string",
+                "description": "Unique deviceAlias."
+              }
+            }
+          },
+          {
+            "oneOf": [
+              {
+                "type": "object",
+                "required": [
+                  "event",
+                  "processData"
+                ],
+                "properties": {
+                  "event": {
+                    "$ref": "#/components/schemas/eventObject"
+                  },
+                  "processData": {
+                    "$ref": "#/components/schemas/processData"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "mqttConfigurationTopicPost": {
+        "allOf": [
+          {
+            "type": "object",
+            "properties": {
+              "topicName": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/mqttConfigurationTopic"
+          }
+        ]
+      },
+      "mqttConfigurationTopicGet": {
+        "allOf": [
+          {
+            "type": "object",
+            "required": [
+              "topicId"
+            ],
+            "properties": {
+              "topicId": {
+                "type": "integer"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "topicName"
+            ],
+            "properties": {
+              "topicName": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/mqttConfigurationTopic"
+          }
+        ],
+        "example": {
+          "topicId": 1,
+          "topicName": "PD input",
+          "qos": "1_AT_LEAST_ONCE",
+          "deviceAlias": "DT35",
+          "processData": {
+            "direction": "getData",
+            "format": "iodd",
+            "interval": {
+              "value": 10,
+              "unit": "ms"
+            }
+          }
+        }
+      },
+      "mqttConnectionStatusGet": {
+        "allOf": [
+          {
+            "type": "object",
+            "required": [
+              "connectionStatus",
+              "serverAddress",
+              "upTime"
+            ],
+            "properties": {
+              "connectionStatus": {
+                "type": "string",
+                "enum": [
+                  "CLIENT_INACTIVE",
+                  "CONNECTION_ACCEPTED",
+                  "UNACCEPTABLE_PROTOCOL_VERSION",
+                  "IDENTIFIER_REJECTED",
+                  "SERVER_UNAVAILABLE",
+                  "BAD_USERNAME_OR_PASSWORD",
+                  "NOT_AUTHORIZED"
+                ]
+              },
+              "serverAddress": {
+                "type": "string"
+              },
+              "upTime": {
+                "type": "integer"
+              }
+            }
+          }
+        ],
+        "example": {
+          "connectionStatus": "CONNECTION_ACCEPTED",
+          "serverAddress": "http://broker-address.com",
+          "upTime": 1050
+        }
+      },
+      "opcuaServerStatusGet": {
+        "type": "object",
+        "required": [
+          "state"
+        ],
+        "properties": {
+          "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "example": "1970-01-01T00:01:01Z"
+          },
+          "currentTime": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2022-05-19T15:38:00Z"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "0_RUNNING",
+              "1_FAILED",
+              "2_NO_CONFIGURATION",
+              "3_SUSPEND",
+              "4_SHUTDOWN",
+              "5_TEST",
+              "6_COMMUNICATION_FAULT",
+              "7_UNKNOWN"
+            ],
+            "description": "OPC UA server states",
+            "example": "RUNNING",
+            "x-enumDescriptions": {
+              "RUNNING": 0,
+              "FAILED": 1,
+              "NO_CONFIGURATION": 2,
+              "SUSPEND": 3,
+              "SHUTDOWN": 4,
+              "TEST": 5,
+              "COMMUNICATION_FAULT": 6,
+              "UNKNOWN": 7
+            }
+          },
+          "buildInfo": {
+            "$ref": "#/components/schemas/opcuaBuildInfoObject"
+          }
+        }
+      },
+      "opcuaBuildInfoObject": {
+        "type": "object",
+        "properties": {
+          "productUri": {
+            "type": "string",
+            "example": "https://mvkpro.54600.1234567890.de"
+          },
+          "manufacturerName": {
+            "type": "string",
+            "example": "Murrelektronik"
+          },
+          "productName": {
+            "type": "string",
+            "example": "OPC UA Server"
+          },
+          "softwareVersion": {
+            "type": "string",
+            "example": "V2.2"
+          },
+          "buildNumber": {
+            "type": "string",
+            "example": 0.2
+          },
+          "buildDate": {
+            "type": "string",
+            "example": "2022-01-25T00:00:00.000Z"
+          }
+        }
+      },
+      "opcuaConfigurationGetPost": {
+        "type": "object",
+        "properties": {
+          "enableServer": {
+            "type": "boolean",
+            "example": true,
+            "description": "This parameter is used to enable/disable the OPC UA server on the gateway"
+          },
+          "portNumber": {
+            "type": "integer",
+            "example": 4840,
+            "description": "Used port for OPC UA communication"
+          },
+          "writeProcessData": {
+            "type": "boolean",
+            "example": false,
+            "description": "If false OPC UA server is not allowed to manipulate (write) process data."
+          },
+          "writeAsyclicData": {
+            "type": "boolean",
+            "example": false,
+            "description": "If false OPC UA server is not allowed to use the asyclic data transfer to manipulate data or configuration settings."
+          }
+        }
+      },
+      "identificationObject": {
+        "type": "object",
+        "required": [
+          "vendorName",
+          "productId",
+          "macAddress"
+        ],
+        "properties": {
+          "vendorName": {
+            "type": "string",
+            "example": "Murrelektronik"
+          },
+          "vendorId": {
+            "type": "string",
+            "description": "Vendor id in an higer level organization. E.g. PI or ODVA.",
+            "example": "0x12f"
+          },
+          "vendorUrl": {
+            "type": "string",
+            "example": "https://murrelektronik.com"
+          },
+          "productName": {
+            "type": "string",
+            "example": "MVKpro"
+          },
+          "productCode": {
+            "type": "string",
+            "description": "Article number",
+            "example": "54600"
+          },
+          "productId": {
+            "type": "string",
+            "description": "Product id in an higer level organization. E.g. PI or ODVA.",
+            "example": "0x0129"
+          },
+          "productClass": {
+            "type": "string",
+            "description": "Classification of the product in general. E.g. device class.",
+            "example": "RIO IOLM"
+          },
+          "productDescription": {
+            "type": "string",
+            "example": "8 port IO-Link Master"
+          },
+          "productManualUrl": {
+            "type": "string",
+            "description": "Link to the manual.",
+            "example": "https://manual.mvk.54600.pdf"
+          },
+          "hardwareRevision": {
+            "type": "string",
+            "example": "V1.1"
+          },
+          "firmwareRevision": {
+            "type": "string",
+            "example": "V1.0.7"
+          },
+          "productInstanceUri": {
+            "type": "string",
+            "example": "https://mvkpro.54600.1234567890.de"
+          },
+          "macAddress": {
+            "type": "string",
+            "example": "00:0F:9E:00:00:00"
+          },
+          "serialNumber": {
+            "type": "string",
+            "example": "1234567890"
+          },
+          "name": {
+            "type": "string",
+            "description": "Given name. E.g. name of station in PROFINET networks.",
+            "example": "opp.hall1.maschine4.picker2.iolm1"
+          },
+          "applicationSpecificTag": {
+            "type": "string",
+            "example": "device123"
+          },
+          "locationTag": {
+            "type": "string",
+            "example": "opp.hall1.maschine4.picker2"
+          },
+          "functionTag": {
+            "type": "string",
+            "example": "sensor signal collecting"
+          }
+        }
+      },
+      "gatewayIdentificationGet": {
+        "$ref": "#/components/schemas/identificationObject"
+      },
+      "slotIdentificationGet": {
+        "allOf": [
+          {
+            "type": "object",
+            "$ref": "#/components/schemas/identificationObject"
+          }
+        ],
+        "example": {
+          "vendorName": "Murrelektronik GmbH",
+          "vendorId": "303",
+          "vendorUrl": "https://murrelektronik.com",
+          "productName": "CUBE IO-Link Master",
+          "productCode": "56766",
+          "productId": "12345",
+          "productClass": "IOLM 8x",
+          "productDescription": "Cube IO-Link master",
+          "productManualUrl": "https://manual.mvk.56766.pdf",
+          "hardwareRevision": "V1.3",
+          "firmwareRevision": "V1.4.1",
+          "productInstanceUri": "https://cube.56766.1234567890.de",
+          "serialNumber": "1234567890",
+          "applicationSpecificTag": "device214",
+          "locationTag": "opp.hall1.maschine7.heater1",
+          "functionTag": "sensor signal collecting"
+        }
+      },
+      "deviceIdentificationGet": {
+        "allOf": [
+          {
+            "type": "object",
+            "$ref": "#/components/schemas/identificationObject"
+          }
+        ],
+        "example": {
+          "vendorName": "Murrelektronik GmbH",
+          "vendorId": "303",
+          "vendorUrl": "https://murrelektronik.com",
+          "productName": "MVP-12-m DI8 DO8 IOL K3",
+          "productCode": "55518",
+          "productId": "786433",
+          "productClass": "IOLD HUB",
+          "productDescription": "IO-Link Hub",
+          "productManualUrl": "https://manual.mvk.55518.pdf",
+          "hardwareRevision": "V2.0",
+          "firmwareRevision": "V1.1.9",
+          "productInstanceUri": "https://mvkpro.55518.1234567890.de",
+          "macAddress": "00:0F:9E:00:00:00",
+          "serialNumber": "1234567890",
+          "applicationSpecificTag": "device127",
+          "locationTag": "opp.hall1.maschine4.picker2.iolm1",
+          "functionTag": "sensor signal collecting"
+        }
+      },
+      "identificationPost": {
+        "type": "object",
+        "properties": {
+          "applicationSpecificTag": {
+            "type": "string"
+          },
+          "locationTag": {
+            "type": "string"
+          },
+          "functionTag": {
+            "type": "string"
+          }
+        }
+      },
+      "dnsServerObject": {
+        "type": "object",
+        "required": [
+          "server",
+          "configuration"
+        ],
+        "properties": {
+          "server": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": [
+                "1.1.1.1",
+                "1.0.0.1"
+              ]
+            }
+          },
+          "configuration": {
+            "type": "string",
+            "enum": [
+              "0_AUTOMATIC",
+              "1_CUSTOM"
+            ],
+            "example": "0_AUTOMATIC",
+            "x-enumDescriptions": {
+              "AUTOMATIC": 0,
+              "CUSTOM": 1
+            }
+          }
+        }
+      },
+      "gatewayNetworkConfigurationGetPost": {
+        "type": "object",
+        "required": [
+          "ethIpv4"
+        ],
+        "properties": {
+          "ethIpv4": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "ipConfiguration"
+              ],
+              "properties": {
+                "ipConfiguration": {
+                  "$ref": "#/components/schemas/ipConfiguration"
+                },
+                "ipAddress": {
+                  "type": "string",
+                  "example": "192.168.138.6"
+                },
+                "subnetMask": {
+                  "type": "string",
+                  "example": "255.255.255.0"
+                },
+                "standardGateway": {
+                  "type": "string",
+                  "example": "192.168.138.1"
+                },
+                "dnsServer": {
+                  "$ref": "#/components/schemas/dnsServerObject"
+                }
+              }
+            }
+          }
+        }
+      },
+      "iolinkCapabilitiesObject": {
+        "type": "object",
+        "required": [
+          "enabled",
+          "ioddSupported"
+        ],
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "ioddSupported": {
+            "type": "boolean"
+          }
+        }
+      },
+      "iolinkErrorObject": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "iolinkPowerSupplyObject": {
+        "type": "object",
+        "required": [
+          "value",
+          "unit"
+        ],
+        "properties": {
+          "value": {
+            "type": "number"
+          },
+          "unit": {
+            "type": "string"
+          }
+        }
+      },
+      "iolinkDatastorageHeaderObject": {
+        "type": "object",
+        "required": [
+          "vendorId",
+          "deviceId",
+          "iolinkRevision"
+        ],
+        "properties": {
+          "vendorId": {
+            "type": "number"
+          },
+          "deviceId": {
+            "type": "number"
+          },
+          "iolinkRevision": {
+            "type": "string",
+            "enum": [
+              "1.0",
+              "1.1"
+            ]
+          }
+        }
+      },
+      "OriginObject": {
+        "type": "object",
+        "required": [
+          "gateway",
+          "slot",
+          "subslot",
+          "deviceAlias"
+        ],
+        "properties": {
+          "gateway": {
+            "type": "string"
+          },
+          "slot": {
+            "type": "number"
+          },
+          "subslot": {
+            "type": "number"
+          },
+          "deviceAlias": {
+            "type": "string"
+          }
+        }
+      },
+      "MessageObject": {
+        "type": "object",
+        "required": [
+          "code",
+          "mode",
+          "text"
+        ],
+        "properties": {
+          "code": {
+            "type": "number"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "SINGLESHOT",
+              "APPEARS",
+              "DISAPPEARS"
+            ]
+          },
+          "text": {
+            "type": "string"
+          }
+        }
+      },
+      "EventObject": {
+        "type": "object",
+        "required": [
+          "time",
+          "severity",
+          "origin",
+          "message"
+        ],
+        "properties": {
+          "time": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "EMERGENCY",
+              "ALERT",
+              "CRITICAL",
+              "ERROR",
+              "WARNING",
+              "NOTICE",
+              "INFO",
+              "DEBUG"
+            ]
+          },
+          "origin": {
+            "$ref": "#/components/schemas/OriginObject"
+          },
+          "message": {
+            "$ref": "#/components/schemas/MessageObject"
+          }
+        }
+      },
+      "errorObject": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "iolinkError": {
+            "$ref": "#/components/schemas/iolinkErrorObject"
+          }
+        }
+      },
+      "eventObject": {
+        "type": "object"
+      },
+      "cycleTime": {
+        "type": "object",
+        "required": [
+          "value",
+          "unit"
+        ],
+        "properties": {
+          "value": {
+            "type": "number"
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "ms"
+            ]
+          }
+        }
+      },
+      "systemGet": {
+        "type": "object",
+        "required": [
+          "reset",
+          "reboot",
+          "update",
+          "blinkTest",
+          "systemTime"
+        ],
+        "properties": {
+          "reset": {
+            "type": "string",
+            "enum": [
+              "NOT_REQUESTED",
+              "REQUESTED"
+            ]
+          },
+          "reboot": {
+            "type": "string",
+            "enum": [
+              "NOT_REQUESTED",
+              "REQUESTED"
+            ]
+          },
+          "update": {
+            "type": "string",
+            "enum": [
+              "NOT_REQUESTED",
+              "REQUESTED"
+            ]
+          },
+          "blinkTest": {
+            "type": "string",
+            "enum": [
+              "NOT_REQUESTED",
+              "REQUESTED"
+            ]
+          },
+          "systemTime": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "reset": "Last reset executed: 00.00.00",
+          "reboot": "Last reboot executed: 00.00.00",
+          "update": "Current Firmware-Version: 0.0.0.1",
+          "blinkTest": "Last reset executed: 00.00.00",
+          "systemTime": "00"
+        }
+      },
+      "systemSet": {
+        "type": "object",
+        "required": [
+          "reset",
+          "reboot",
+          "update",
+          "updatepath",
+          "blinkTest",
+          "systemTime"
+        ],
+        "properties": {
+          "reset": {
+            "type": "string",
+            "enum": [
+              "NOT_REQUESTED",
+              "REQUESTED"
+            ]
+          },
+          "reboot": {
+            "type": "string",
+            "enum": [
+              "NOT_REQUESTED",
+              "REQUESTED"
+            ]
+          },
+          "update": {
+            "type": "string",
+            "enum": [
+              "NOT_REQUESTED",
+              "REQUESTED"
+            ]
+          },
+          "updatepath": {
+            "type": "string"
+          },
+          "blinkTest": {
+            "type": "string",
+            "enum": [
+              "NOT_REQUESTED",
+              "REQUESTED"
+            ]
+          },
+          "systemTime": {
+            "type": "string"
+          }
+        },
+        "example": {
+          "reset": "NOT_REQUESTED",
+          "reboot": "NOT_REQUESTED",
+          "update": "NOT_REQUESTED",
+          "updatePath": "path/to/file",
+          "blinkTest": "NOT_REQUESTED",
+          "systemTime": "00"
+        }
+      },
+      "ledObject": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "UA"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ledStatus"
+          },
+          "color": {
+            "$ref": "#/components/schemas/ledColor"
+          }
+        }
+      },
+      "ledStatus": {
+        "type": "string",
+        "enum": [
+          "ON",
+          "OFF",
+          "BLINKING",
+          "FLASHING",
+          "SINGLE_FLASHING",
+          "DOUBLE_FLASHING",
+          "TRIPPLE_FLASHING"
+        ],
+        "example": "ON"
+      },
+      "ledColor": {
+        "type": "string",
+        "enum": [
+          "RED",
+          "YELLOW",
+          "GREEN",
+          "ORANGE",
+          "BLUE"
+        ],
+        "example": "GREEN"
+      },
+      "fileObject": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "extension"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "starting with 0",
+            "example": 0
+          },
+          "name": {
+            "type": "string",
+            "description": "filename",
+            "example": "myimage"
+          },
+          "extension": {
+            "type": "string",
+            "description": "file extension",
+            "example": ".png"
+          },
+          "lastMotified": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2022-02-22T08:30:00Z"
+          }
+        }
+      },
+      "diagnosticReportsObject": {
+        "type": "object",
+        "properties": {
+          "globalDiagnosticReport": {
+            "type": "boolean",
+            "description": "Enables (true) or disables (false) the global diagnostic report.  If disabled no diagnostics (alarm/event) will be thrown.",
+            "example": true
+          },
+          "undervoltageUsReport": {
+            "type": "boolean",
+            "description": "Enables (true) or disables (false) undervoltage diagnostic reports of Sensor supply voltage US.  If disabled no undervoltage US diagnostics (alarm/event) will be thrown.",
+            "example": true
+          },
+          "undervoltageUsThresold": {
+            "type": "string",
+            "enum": [
+              "17.0V-17.5V",
+              "17.5V-18.0V",
+              "18.0V-18.5V",
+              "18.5V-19.0V",
+              "19.0V-19.5V",
+              "19.5V-20.0V"
+            ],
+            "description": "Threshold with hysteresis when undervoltage US alarm/event is thrown.",
+            "example": "17.0V-17.5V",
+            "x-enumDescriptions": {
+              "17.0V-17.5V": 0,
+              "17.5V-18.0V": 1,
+              "18.0V-18.5V": 2,
+              "18.5V-19.0V": 3,
+              "19.0V-19.5V": 4,
+              "19.5V-20.0V": 5
+            }
+          },
+          "undervoltageUaReport": {
+            "type": "boolean",
+            "description": "Enables (true) or disables (false) undervoltage diagnostic reports of Actor supply voltage UA.  If disabled no undervoltage UA diagnostics (alarm/event) will be thrown.",
+            "example": true
+          },
+          "undervoltageUaThresold": {
+            "type": "string",
+            "enum": [
+              "17.0V-17.5V",
+              "17.5V-18.0V",
+              "18.0V-18.5V",
+              "18.5V-19.0V",
+              "19.0V-19.5V",
+              "19.5V-20.0V"
+            ],
+            "description": "Threshold with hysteresis when undervoltage UA alarm/event is thrown.",
+            "example": "18.0V-18.5V",
+            "x-enumDescriptions": {
+              "17.0V-17.5V": 0,
+              "17.5V-18.0V": 1,
+              "18.0V-18.5V": 2,
+              "18.5V-19.0V": 3,
+              "19.0V-19.5V": 4,
+              "19.5V-20.0V": 5
+            }
+          },
+          "missingUaReport": {
+            "type": "boolean",
+            "description": "Enables (true) or disables (false) a missing UA diagnostic reports.  If disabled no missing UA diagnostics (alarm/event) will be thrown",
+            "example": true
+          },
+          "diagnosticsLed": {
+            "type": "boolean",
+            "description": "Enables (true) or disables (false) indication of pending diagnostics on diagnostics locked. if disabled diagnostics LED is not red even diagnostics is pending (e.g. Ua undervoltage)",
+            "example": true
+          }
+        }
+      },
+      "ioLayoutObject": {
+        "type": "object",
+        "properties": {
+          "ioLayoutDigitalChannels": {
+            "type": "string",
+            "enum": [
+              "0_PORT_BASED",
+              "1_PIN_BASED"
+            ],
+            "description": "IO Layout of the digital channels.  Port based: bit_0 -> port_0_pin_4, bit_1 -> port_0_pin_2, bit_2 -> port_1_pin_4, bit_3 -> port_1_pin_2, ... Pin based:  bit_0 -> port_0_pin_4, bit_1 -> port_1_pin_4, ..., bit_8 -> port_1_pin_2, bit_9 -> port_2_pin_2, ...",
+            "example": "0_PORT_BASED",
+            "x-enumDescriptions": {
+              "PORT_BASED": 0,
+              "PIN_BASED": 1
+            }
+          }
+        }
+      },
+      "CapabilitiesGatewayObject": {
+        "type": "object",
+        "required": [
+          "iolinkSupported",
+          "mqttSupported",
+          "OpcUa"
+        ],
+        "properties": {
+          "iolinkSupported": {
+            "$ref": "#/components/schemas/iolinkCapabilitiesObject"
+          },
+          "mqttSupported": {
+            "type": "boolean"
+          },
+          "OpcUa": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CapabilitiesSlotsObject": {
+        "type": "object",
+        "required": [
+          "numberOfPorts"
+        ],
+        "properties": {
+          "numberOfPorts": {
+            "type": "integer"
+          }
+        }
+      },
+      "CapabilitiesSubSlotsObject": {
+        "type": "object",
+        "required": [
+          "portType",
+          "maxPowerSupply"
+        ],
+        "properties": {
+          "portType": {
+            "type": "string",
+            "enum": [
+              "CLASS_A",
+              "CLASS_B",
+              "CLASS_A_WITH_PORT_POWER_OFF_ON",
+              "FAILSAFE_PORT_A_WITHOUT_SAFETY_DIGITAL_INPUTS",
+              "FAILSAFE_PORT_A_WITH_ SAFETY_DIGITAL_INPUTS",
+              "FAILSAFE_PORT_B",
+              "WIRELESS_MASTER"
+            ]
+          },
+          "maxPowerSupply": {
+            "$ref": "#/components/schemas/iolinkPowerSupplyObject"
+          }
+        }
+      },
+      "plcObject": {
+        "type": "object",
+        "required": [
+          "connected"
+        ],
+        "properties": {
+          "connected": {
+            "type": "boolean",
+            "description": "True if connection to an PLC or controller is established.",
+            "example": true
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of connected PLC or controller.",
+            "example": "opp.cell1.plc3"
+          }
+        }
+      },
+      "ethStatusObject": {
+        "type": "object",
+        "required": [
+          "name",
+          "linkMau"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of ethernet adapter.",
+            "example": "eth0"
+          },
+          "linkMau": {
+            "type": "string",
+            "enum": [
+              "LINK_DOWN",
+              "10MBIT_HALF_DUPLEX_COPPER",
+              "10MBIT_FULL_DUPLEX_COPPER",
+              "100MBIT_HALF_DUPLEX_COPPER",
+              "100MBIT_FULL_DUPLEX_COPPER",
+              "100MBIT_HALF_DUPLEX_GLAS_FIBER",
+              "100MBIT_FULL_DUPLEX_GLAS_FIBER",
+              "1000MBIT_HALF_DUPLEX_COPPER",
+              "1000MBIT_FULL_DUPLEX_COPPER",
+              "10GBIT_HALF_DUPLEX_COPPER",
+              "10GBIT_FULL_DUPLEX_COPPER"
+            ],
+            "description": "Current active link of this ethernet port.",
+            "example": "100MBIT_FULL_DUPLEX_COPPER",
+            "x-enumDescriptions": {
+              "LINK_DOWN": 0,
+              "10MBIT_HALF_DUPLEX_COPPER": 10,
+              "10MBIT_FULL_DUPLEX_COPPER": 11,
+              "100MBIT_HALF_DUPLEX_COPPER": 15,
+              "100MBIT_FULL_DUPLEX_COPPER": 16,
+              "100MBIT_HALF_DUPLEX_GLAS_FIBER": 17,
+              "100MBIT_FULL_DUPLEX_GLAS_FIBER": 18,
+              "1000MBIT_HALF_DUPLEX_COPPER": 19,
+              "1000MBIT_FULL_DUPLEX_COPPER": 20,
+              "10GBIT_HALF_DUPLEX_COPPER": 21,
+              "10GBIT_FULL_DUPLEX_COPPER": 22
+            }
+          },
+          "mdiState": {
+            "type": "string",
+            "enum": [
+              "AUTO",
+              "MDI",
+              "MDI_X"
+            ],
+            "description": "current MDI type",
+            "example": "AUTO",
+            "x-enumDescriptions": {
+              "AUTO": 1,
+              "MDI": 2,
+              "MDI_X": 3
+            }
+          }
+        }
+      },
+      "gatewayStatusObject": {
+        "type": "object",
+        "properties": {
+          "plc": {
+            "$ref": "#/components/schemas/plcObject"
+          },
+          "eth": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ethStatusObject"
+            },
+            "example": [
+              {
+                "name": "eth0",
+                "linkMau": "100MBIT_FULL_DUPLEX_COPPER",
+                "mdiState": "AUTO"
+              },
+              {
+                "name": "eth1",
+                "linkMau": "LINK_DOWN",
+                "mdiState": "AUTO"
+              }
+            ]
+          }
+        }
+      },
+      "operationStatus": {
+        "type": "string",
+        "enum": [
+          "DEACTIVATED",
+          "PREOPERATIONAL",
+          "OPERATIONAL",
+          "HALTED",
+          "ERROR"
+        ],
+        "description": "Current operation status of the module connected to this slot.",
+        "example": "OPERATIONAL",
+        "x-enumDescriptions": {
+          "DEACTIVATED": 0,
+          "PREOPERATIONAL": 1,
+          "OPERATIONAL": 2,
+          "HALTED": 3,
+          "ERROR": 4
+        }
+      },
+      "physicalValueObject": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "type": "integer"
+          },
+          "unit": {
+            "type": "string",
+            "description": "si-unit"
+          }
+        }
+      },
+      "slotStatusObject": {
+        "type": "object",
+        "properties": {
+          "operationStatus": {
+            "$ref": "#/components/schemas/operationStatus"
+          },
+          "bootCycleCounter": {
+            "type": "integer",
+            "description": "Actual number of boot cycles of the module connected to this slot.",
+            "example": 14
+          },
+          "physicalValues": {
+            "type": "object",
+            "properties": {
+              "temperatures": {
+                "type": "array",
+                "description": "Actual meassured internal temperatures of the module connected to this slot.",
+                "items": {
+                  "$ref": "#/components/schemas/physicalValueObject"
+                },
+                "example": [
+                  {
+                    "name": "internal temperature 1",
+                    "value": 33.3,
+                    "unit": "°C"
+                  },
+                  {
+                    "name": "internal temperature 2",
+                    "value": 41.2,
+                    "unit": "°C"
+                  }
+                ]
+              },
+              "voltages": {
+                "type": "array",
+                "description": "Actual meassured voltages of the module connected to this slot.",
+                "items": {
+                  "$ref": "#/components/schemas/physicalValueObject"
+                },
+                "example": [
+                  {
+                    "name": "sensor supply voltage (US)",
+                    "value": 24.2,
+                    "unit": "V"
+                  },
+                  {
+                    "name": "actor supply voltage (UA)",
+                    "value": 23.7,
+                    "unit": "V"
+                  }
+                ]
+              },
+              "currents": {
+                "type": "array",
+                "description": "Actual meassured currents of the module connected to this slot.",
+                "items": {
+                  "$ref": "#/components/schemas/physicalValueObject"
+                },
+                "example": [
+                  {
+                    "name": "sensor supply current (IS)",
+                    "value": 0.2,
+                    "unit": "A"
+                  },
+                  {
+                    "name": "actor supply current (IA)",
+                    "value": 1.2,
+                    "unit": "A"
+                  }
+                ]
+              },
+              "power": {
+                "type": "array",
+                "description": "Actual power consumptions of the module connected to this slot.",
+                "items": {
+                  "$ref": "#/components/schemas/physicalValueObject"
+                },
+                "example": [
+                  {
+                    "name": "actual power consumption",
+                    "value": 7,
+                    "unit": "W"
+                  },
+                  {
+                    "name": "total power consumption",
+                    "value": 0.6,
+                    "unit": "kWh"
+                  }
+                ]
+              },
+              "operatingHours": {
+                "type": "array",
+                "description": "Actual counted operating hours of the module connected to this slot.",
+                "items": {
+                  "$ref": "#/components/schemas/physicalValueObject"
+                },
+                "example": [
+                  {
+                    "name": "total operating hours",
+                    "value": 518.1,
+                    "unit": "h"
+                  },
+                  {
+                    "name": "operating hours since last system up",
+                    "value": 5.2,
+                    "unit": "h"
+                  }
+                ]
+              },
+              "freeFlashSpace": {
+                "type": "array",
+                "description": "Actual calculated free flash spaces sections of the module connected to this slot",
+                "items": {
+                  "$ref": "#/components/schemas/physicalValueObject"
+                },
+                "example": [
+                  {
+                    "name": "driveA",
+                    "value": 1024,
+                    "unit": "kB"
+                  },
+                  {
+                    "name": "drivB",
+                    "value": 2048,
+                    "unit": "kB"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "subslotLegacyConnectionObject": {
+        "type": "object",
+        "description": "This object is used if this subslot item is not configured as serial connector to a device.",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "OK",
+              "OPEN_LOAD",
+              "SHORT_CIRCUIT",
+              "OBERLOAD"
+            ],
+            "example": "OK",
+            "x-enumDescriptions": {
+              "OK": 0,
+              "OPEN_LOAD": 1,
+              "SHORT_CIRCUIT": 2,
+              "OBERLOAD": 3
+            }
+          }
+        }
+      },
+      "subslotSerialConnectionObject": {
+        "type": "object",
+        "description": "This object is used if this subslot item is configured as a serial connector to a device",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "COMMUNICATION_LOST",
+              "DEACTIVATED",
+              "INCORRECT_DEVICE",
+              "DEVICE_STARTING",
+              "DEVICE_ONLINE",
+              "NOT_AVAILABLE"
+            ],
+            "example": "DEVICE_ONLINE",
+            "x-enumDescriptions": {
+              "DEACTIVATED": 0,
+              "COMMUNICATION_LOST": 1,
+              "INCORRECT_DEVICE": 2,
+              "DEVICE_STARTING": 3,
+              "DEVICE_ONLINE": 4,
+              "NOT_AVAILABLE": 7
+            }
+          },
+          "revision": {
+            "type": "string",
+            "description": "Mandatory if the portStatusInfo is INCORRECT_DEVICE, PREOPERATE or OPERATE.",
+            "enum": [
+              "1.0",
+              "1.1"
+            ],
+            "example": "1.1",
+            "x-enumDescriptions": {
+              "1.0": 0,
+              "1.1": 1
+            }
+          },
+          "transmissionRate": {
+            "description": "Mandatory if the portStatusInfo is INCORRECT_DEVICE, PREOPERATE or OPERATE.",
+            "type": "string",
+            "enum": [
+              "COM1",
+              "COM2",
+              "COM3"
+            ],
+            "x-enumDescriptions": {
+              "COM1": 0,
+              "COM2": 1,
+              "COM3": 2
+            }
+          },
+          "masterCycleTime": {
+            "description": "Mandatory if the portStatusInfo is INCORRECT_DEVICE, PREOPERATE or OPERATE.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/cycleTime"
+              }
+            ],
+            "example": {
+              "value": 12,
+              "unit": "ms"
+            }
+          }
+        }
+      },
+      "subslotItemObject": {
+        "type": "object",
+        "description": "Subslot item object. If product is an IOLM: slot -> IOLM, subslot -> port, subslotItem -> pin",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "pin4"
+          },
+          "functionType": {
+            "type": "string",
+            "description": "Function type of subslot item",
+            "enum": [
+              "IOL",
+              "DIGITAL_INPUT",
+              "DIGITAL_OUTPUT",
+              "POWER"
+            ],
+            "example": "IOL",
+            "x-enumDescriptions": {
+              "IOL": 0,
+              "DIGITAL_INPUT": 1,
+              "DIGITAL_OUTPUT": 2,
+              "POWER": 3
+            }
+          },
+          "connection": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/subslotSerialConnectionObject"
+              },
+              {
+                "$ref": "#/components/schemas/subslotLegacyConnectionObject"
+              }
+            ],
+            "example": {
+              "name": "pin4",
+              "functionType": "IOL",
+              "connection": {
+                "status": "DEVICE_ONLINE",
+                "revision": "1.1",
+                "transmissionRate": "COM1",
+                "masterCycleTime": {
+                  "value": 2.3,
+                  "unit": "ms"
+                }
+              }
+            }
+          },
+          "actualCurrent": {
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/physicalValueObject"
+              }
+            ],
+            "example": {
+              "value": 0.2,
+              "unit": "A"
+            }
+          }
+        }
+      },
+      "subslotStatusObject": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/subslotItemObject"
+            }
+          }
+        }
+      },
+      "gatewayLedsGet": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/ledObject"
+        },
+        "example": [
+          {
+            "name": "SF",
+            "status": "ON",
+            "color": "RED"
+          },
+          {
+            "name": "CFG",
+            "status": "OFF",
+            "color": "RED"
+          },
+          {
+            "name": "LNK1",
+            "status": "SINGLE_FLASHING",
+            "color": "YELLOW"
+          },
+          {
+            "name": "LNK2",
+            "status": "OFF",
+            "color": "YELLOW"
+          }
+        ]
+      },
+      "slotLedsGet": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/ledObject"
+        },
+        "example": [
+          {
+            "name": "UA",
+            "status": "ON",
+            "color": "GREEN"
+          },
+          {
+            "name": "US",
+            "status": "BLINKING",
+            "color": "RED"
+          }
+        ]
+      },
+      "subslotLedsGet": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/ledObject"
+        },
+        "example": [
+          {
+            "name": "PIN2",
+            "status": "ON",
+            "color": "YELLOW"
+          },
+          {
+            "name": "PIN4",
+            "status": "SINGLE_FLASHING",
+            "color": "YELLOW"
+          }
+        ]
+      },
+      "DatastorageSlotsObject": {
+        "type": "object",
+        "required": [
+          "header",
+          "content"
+        ],
+        "properties": {
+          "header": {
+            "$ref": "#/components/schemas/iolinkDatastorageHeaderObject"
+          },
+          "content": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "parameters": {
+      "slotNumber": {
+        "name": "slotNumber",
+        "in": "path",
+        "description": "Slot identification number starting with 1",
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "required": true
+      },
+      "subslotNumber": {
+        "name": "subslotNumber",
+        "in": "path",
+        "description": "Subslot identification number starting with 1",
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "required": true
+      },
+      "deviceAlias": {
+        "name": "deviceAlias",
+        "in": "path",
+        "description": "Device Name configured with the subslot/configuration URL. Default Device Name is 'slotNsubslotM' where 'N' means the slotNumber and 'M' means the subslotNumber.",
+        "schema": {
+          "type": "string"
+        },
+        "required": true
+      },
+      "usernameQuery": {
+        "name": "username",
+        "in": "query",
+        "description": "Query parameter username for this operation. No special characters or whitespaces are allowed for this parameter.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "example": "user1"
+        }
+      },
+      "usernamePath": {
+        "name": "username",
+        "in": "path",
+        "description": "Path parameter username for this operation. No special characters or whitespaces are allowed for this parameter.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "example": "user1"
+        }
+      },
+      "passwordQuery": {
+        "name": "password",
+        "in": "query",
+        "description": "Path parameter password for this operation. Password in clear text.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "example": "strongPassword"
+        }
+      },
+      "mqttTopicId": {
+        "name": "topicId",
+        "in": "path",
+        "description": "ID of a configured MQTT topic. This the position of the topic in the topics list.",
+        "required": true,
+        "schema": {
+          "type": "integer"
+        }
+      },
+      "fileName": {
+        "name": "fileName",
+        "in": "path",
+        "description": "Filename including file extension. No special characters or whitespaces are allowed for this parameter.",
+        "schema": {
+          "type": "string"
+        },
+        "required": true,
+        "example": "myfilname.ext"
+      },
+      "EventOrigin": {
+        "name": "EventOrigin",
+        "in": "query",
+        "description": "Origin/source of event: “ALL”(default), “GATEWAY”, “SLOT”, “SUBSLOT”, “DEVICES”",
+        "schema": {
+          "type": "string"
+        },
+        "required": true,
+        "example": "DEVICES"
+      },
+      "EventSlotNumber": {
+        "name": "EventSlotNumber",
+        "in": "query",
+        "description": "Select the Slot in case of more than one. \"EventSlotNumber\" is only applicable with origin=SLOT and SUBSLOT",
+        "schema": {
+          "type": "number"
+        },
+        "required": true,
+        "example": 1
+      },
+      "EventSubSlotNumber": {
+        "name": "EventSubSlotNumber",
+        "in": "query",
+        "description": "Select the port. \"EventSubSlotNumber\" is only applicable with origin=SUBSLOT.",
+        "schema": {
+          "type": "integer"
+        },
+        "required": true,
+        "example": 1
+      },
+      "ioLinkEventDeviceAlias": {
+        "name": "ioLinkEventDeviceAlias",
+        "in": "query",
+        "description": "Select a IO-Link device via alias. \"ioLinkEventDeviceAlias\" is only applicable with origin=DEVICES.",
+        "schema": {
+          "type": "string"
+        },
+        "required": true,
+        "example": "Digital Output Modul"
+      },
+      "EventTop": {
+        "name": "EventTop",
+        "in": "query",
+        "description": "Delivers the oldest n events of the event buffer.  \"EventTop\" is mutually exclusive to \"EventBottom\".",
+        "schema": {
+          "type": "integer"
+        },
+        "required": true,
+        "example": 1
+      },
+      "EventBottom": {
+        "name": "EventBottom",
+        "in": "query",
+        "description": "Delivers the oldest n events of the event buffer.  \"EventBottom\" is mutually exclusive to \"EventTop\".",
+        "schema": {
+          "type": "integer"
+        },
+        "required": true,
+        "example": 1
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "jwt",
+        "description": "note: non-oauth scopes are not defined at the securityScheme level"
+      }
+    },
+    "examples": {
+      "mqttActiveClient": {
+        "value": {
+          "clientMode": "ACTIVE",
+          "serverAddress": "192.168.138.1/mqttbroker",
+          "username": "user1",
+          "password": "123456789",
+          "lastwill": [
+            {
+              "topic": "process_data",
+              "message": "Process data transfer stopped.",
+              "qos": "0_ONLY_ONCE",
+              "retain": true
+            }
+          ],
+          "keepAliveTime": 10
+        }
+      },
+      "mqttInactiveClient": {
+        "value": {
+          "clientMode": "INACTIVE"
+        }
+      },
+      "mqttTopicGetData": {
+        "value": {
+          "topicId": 10,
+          "topicName": "Sensor34/processData",
+          "qos": "1_AT_LEAST_ONCE",
+          "deviceAlias": "DT35",
+          "processData": {
+            "direction": "getData",
+            "format": "iodd",
+            "interval": {
+              "value": 10,
+              "unit": "ms"
+            }
+          }
+        }
+      },
+      "mqttTopicPostData": {
+        "value": {
+          "topicName": "Sensor34/processData",
+          "qos": "1_AT_LEAST_ONCE",
+          "deviceAlias": "DT35",
+          "processData": {
+            "direction": "getData",
+            "format": "iodd",
+            "interval": {
+              "value": 10,
+              "unit": "ms"
+            }
+          }
+        }
+      },
+      "mqttTopicGetEvent": {
+        "value": {
+          "topicId": 20,
+          "topicName": "Sensor34/event",
+          "qos": "1_AT_LEAST_ONCE",
+          "deviceAlias": "TAD081",
+          "event": null
+        }
+      },
+      "mqttTopicPostEvent": {
+        "value": {
+          "topicName": "Sensor34/event",
+          "qos": "1_AT_LEAST_ONCE",
+          "deviceAlias": "TAD081",
+          "event": {}
+        }
+      },
+      "mqttTopicGetSetData": {
+        "value": {
+          "topicId": 30,
+          "topicName": "PD",
+          "qos": "0_ONLY_ONCE",
+          "deviceAlias": "BNI_IOL",
+          "processData": {
+            "direction": "getSetData",
+            "format": "iodd",
+            "onChange": true
+          }
+        }
+      },
+      "filesGet": {
+        "value": [
+          {
+            "id": 0,
+            "name": "mypicture",
+            "extension": ".png",
+            "lastMotified": "2022-05-17T11:09:00Z"
+          },
+          {
+            "id": 1,
+            "name": "myconfiguration1",
+            "extension": ".cfg",
+            "lastMotified": "1970-01-01T00:00:00Z"
+          }
+        ]
+      },
+      "readEvents": {
+        "value": [
+          {
+            "time": "2022-05-18T07:31:54.123Z",
+            "severity": "WARNING",
+            "origin": null,
+            "masterNumber": 1,
+            "portNumber": 2,
+            "deviceAlias": "hydraulic valve 3",
+            "message": null,
+            "code": 16900,
+            "mode": "SINGLESHOT",
+            "text": "presure difference in valve - call 911"
+          },
+          {
+            "time": "2022-05-10T14:20:09.123Z",
+            "severity": "ERROR",
+            "origin": null,
+            "slotNumber": 3,
+            "subSlotNumber": 1,
+            "deviceAlias": "Digital Output Modul",
+            "message": null,
+            "code": 130,
+            "mode": "APPEARS",
+            "text": "FET outputvoltage should be low, but high voltage is meassured!"
+          }
+        ]
+      },
+      "readCapabilitiesGateway": {
+        "value": [
+          {
+            "iolinkSupported": {
+              "enabled": true,
+              "ioddSupported": true
+            },
+            "mqttSupported": false,
+            "opcuaSupported": false
+          }
+        ]
+      },
+      "readCapabilitiesSlots": {
+        "value": [
+          {
+            "numberOfPorts": 8
+          }
+        ]
+      },
+      "readCapabilitiesSubSlots": {
+        "value": [
+          {
+            "portType": "CLASS_A",
+            "maxPowerSupply": {
+              "value": 8,
+              "unit": "Ampere"
+            }
+          }
+        ]
+      },
+      "slotInformation": {
+        "value": [
+          {
+            "vendorName": "Murrelektronik GmbH",
+            "vendorId": "303",
+            "vendorUrl": "https://murrelektronik.com",
+            "productName": "CUBE IO-Link Master",
+            "productCode": "56766",
+            "productId": "12345",
+            "productClass": "IOLM 8x",
+            "productDescription": "Cube IO-Link master",
+            "productManualUrl": "https://manual.mvk.56766.pdf",
+            "hardwareRevision": "V1.3",
+            "firmwareRevision": "V1.4.1",
+            "productInstanceUri": "https://cube.56766.1234567890.de",
+            "serialNumber": "1234567890",
+            "applicationSpecificTag": "device214",
+            "locationTag": "opp.hall1.maschine7.heater1",
+            "functionTag": "sensor signal collecting"
+          }
+        ]
+      },
+      "deviceInformation": {
+        "value": [
+          {
+            "vendorName": "Murrelektronik GmbH",
+            "vendorId": "303",
+            "vendorUrl": "https://murrelektronik.com",
+            "productName": "MVP-12-m DI8 DO8 IOL K3",
+            "productCode": "55518",
+            "productId": "786433",
+            "productClass": "IOLD HUB",
+            "productDescription": "IO-Link Hub",
+            "productManualUrl": "https://manual.mvk.55518.pdf",
+            "hardwareRevision": "V2.0",
+            "firmwareRevision": "V1.1.9",
+            "productInstanceUri": "https://mvkpro.55518.1234567890.de",
+            "macAddress": "00:0F:9E:00:00:00",
+            "serialNumber": "1234567890",
+            "applicationSpecificTag": "device127",
+            "locationTag": "opp.hall1.maschine4.picker2.iolm1",
+            "functionTag": "sensor signal collecting"
+          }
+        ]
+      },
+      "subslotStatus": {
+        "value": [
+          {
+            "name": "pin1",
+            "functionType": "POWER",
+            "connection": {
+              "status": "OK"
+            },
+            "actualCurrent": {
+              "value": 250,
+              "unit": "mA"
+            }
+          },
+          {
+            "name": "pin2",
+            "functionType": "DIGITAL_OUTPUT",
+            "connection": {
+              "status": "OVERLOAD"
+            },
+            "actualCurrent": {
+              "value": 1001,
+              "unit": "mA"
+            }
+          },
+          {
+            "name": "pin4",
+            "functionType": "IOL",
+            "connection": {
+              "status": "DEVICE_ONLINE",
+              "revision": "1.1",
+              "transmissionRate": "COM1",
+              "masterCycleTime": {
+                "value": 2.3,
+                "unit": "ms"
+              }
+            },
+            "actualCurrent": {
+              "value": 12,
+              "unit": "mA"
+            }
+          }
+        ]
+      },
+      "readDatastorageSlots": {
+        "value": [
+          {
+            "vendorId": 123,
+            "deviceId": 987,
+            "iolinkRevision": "1.1",
+            "content": "YmFzZTY0IGVuY3J5cHRlZCBjb250ZW50"
+          }
+        ]
+      }
+    }
+  }
+}

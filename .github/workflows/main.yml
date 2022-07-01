@@ -1,0 +1,55 @@
+#ToDo Sven: 
+#add worflow for
+#build
+#test
+#deploy
+
+# This is a basic workflow to help you get started with Actions
+
+name: CI flow for Web-UI
+
+env:
+  USER: "sven"
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  push:
+    branches: [ master, develop ]
+  pull_request:
+    branches: [ master, develop ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  build_ubuntu:
+    # The type of runner that the job will run on
+    runs-on: [self-hosted, Linux, X64]
+  
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out repository under $GITHUB_WORKSPACE
+      - uses: actions/checkout@v3
+  
+      # Runs a single command using the runners shell
+      - name: Run a one-line script
+        run: echo Job from $USER started...
+
+#      - name: Login to Docker Hub
+#        uses: docker/login-action@v1
+#        with:
+#          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+#          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+#          
+#      - name: Set up Docker Buildx
+#        uses: docker/setup-buildx-action@v1
+#        
+#      - name: Build UI and push
+#        uses: docker/build-push-action@v2
+#        with:
+#          context: .
+#          file: ./Dockerfile_UI
+#          push: true
+#          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/open_api_tools_repo:20220630
