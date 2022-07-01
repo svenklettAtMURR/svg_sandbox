@@ -1,14 +1,15 @@
 import React from 'react';
-import logo from './logo.svg';
-import { Counter } from './features/counter/Counter';
+//import IO_Link_Master from './components/IOL_Master_Pic.js';
+//import IOL_Master from './IOL_Master.svg';
+import MasterImage from "./components/MasterImage";
 import './App.css';
 
 function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <Counter />
+        <h2>svg playground</h2>
+        <MasterImage></MasterImage>
         <p>
           Edit <code>src/App.js</code> and save to reload.
         </p>
