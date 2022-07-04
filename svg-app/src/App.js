@@ -1,5 +1,5 @@
 import React from 'react';
-//import IO_Link_Master from './components/IOL_Master_Pic.js';
+//import IO_Link_Master from './components/IOLMasterPic.js';
 //import IOL_Master from './IOL_Master.svg';
 import MasterImage from "./components/MasterImage";
 import './App.css';
