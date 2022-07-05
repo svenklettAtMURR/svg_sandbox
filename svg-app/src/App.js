@@ -1,15 +1,17 @@
 import React from 'react';
-//import IO_Link_Master from './components/IOLMasterPic.js';
 //import IOL_Master from './IOL_Master.svg';
-import MasterImage from "./components/MasterImage";
+import IOLinkMasterPic from "./components/MasterImage";
 import './App.css';
 
 function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <h2>svg playground</h2>
-        <MasterImage></MasterImage>
+        <div style={{fontSize:'25px', myLED:'yellow'}}>
+          <h2>svg playground</h2>
+          <IOLinkMasterPic config={{ myLED:"red", Port2:"green", Port2Text:"Lalilu" }}/>
+        </div>
+        
         <p>
           Edit <code>src/App.js</code> and save to reload.
         </p>
